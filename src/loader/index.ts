@@ -1,3 +1,3 @@
 import * as UserLoader from '../modules/user/UserLoader';
-
-export { UserLoader };
+import * as BeerLoader from '../modules/beer/BeerLoader';
+export { UserLoader, BeerLoader };
