@@ -1,8 +1,9 @@
 // @flow
 import { GraphQLString, GraphQLNonNull, GraphQLInt } from 'graphql';
-import { mutationWithClientMutationId } from 'graphql-relay';
-import BeerType from '../BeerType';
+import { mutationWithClientMutationId, toGlobalId } from 'graphql-relay';
+import BeerType, { BeerConnection } from '../BeerType';
 import BeerModel from '../BeerModel';
+import * as BeerLoader from '../BeerLoader';
 
 export default mutationWithClientMutationId({
   name: 'BeerRegister',
@@ -15,26 +16,35 @@ export default mutationWithClientMutationId({
     },
   },
   mutateAndGetPayload: async ({ name, quantity }) => {
-    let beer = await BeerModel.findOne({ name: name.toLowerCase() });
+    const hasBeer = await BeerModel.findOne({ name: name.toLowerCase() });
 
-    if (beer) {
+    if (hasBeer) {
       return {
         error: 'Already in our database',
       };
     }
 
-    beer = new BeerModel({
+    const beer = await new BeerModel({
       name,
       quantity,
-    });
+    }).save();
 
-    await beer.save();
-    return { beer };
+    return {
+      beer,
+    };
   },
   outputFields: {
-    beer: {
-      type: BeerType,
-      resolve: ({ token }) => token,
+    beerEdge: {
+      type: BeerConnection.edgeType,
+      resolve: async ({ beer }, args, context) => {
+        if (!beer) return null;
+
+        const node = await BeerLoader.load(context, beer._id);
+        return {
+          cursor: toGlobalId('Beer', node.id),
+          node,
+        };
+      },
     },
     error: {
       type: GraphQLString,

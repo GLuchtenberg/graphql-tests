@@ -1,5 +1,5 @@
 import { GraphQLObjectType, GraphQLString, GraphQLBoolean, GraphQLNonNull, GraphQLInt } from 'graphql';
-import { globalIdField } from 'graphql-relay';
+import { globalIdField, connectionDefinitions } from 'graphql-relay';
 import { registerType } from '../../interface/NodeInterface';
 
 const BeerType = registerType(
@@ -25,8 +25,12 @@ const BeerType = registerType(
         resolve: beer => beer.active,
       },
     }),
-
   }),
 );
 
 export default BeerType;
+
+export const BeerConnection = connectionDefinitions({
+  name: 'Beer',
+  nodeType: GraphQLNonNull(BeerType),
+});
